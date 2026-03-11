@@ -7,11 +7,14 @@ const DRAG_BOUNDS = 1600;
 interface DraggableMapProps {
   children: React.ReactNode;
   targetCenter: { x: number; y: number } | null;
+  targetZoom?: number | null;
+  shakePulse?: number;
   onCenterReached: () => void;
 }
 
-export function DraggableMap({ children, targetCenter, onCenterReached }: DraggableMapProps) {
+export function DraggableMap({ children, targetCenter, targetZoom, shakePulse = 0, onCenterReached }: DraggableMapProps) {
   const [scale, setScale] = useState(1);
+  const [shake, setShake] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -27,15 +30,44 @@ export function DraggableMap({ children, targetCenter, onCenterReached }: Dragga
   }, []);
 
   useEffect(() => {
-    if (!targetCenter) return;
-    const targetX = MAP_WIDTH / 2 - targetCenter.x;
-    const targetY = MAP_HEIGHT / 2 - targetCenter.y;
-    const clampedX = Math.max(-DRAG_BOUNDS, Math.min(DRAG_BOUNDS, targetX));
-    const clampedY = Math.max(-DRAG_BOUNDS, Math.min(DRAG_BOUNDS, targetY));
-    x.set(clampedX);
-    y.set(clampedY);
-    onCenterReached();
-  }, [targetCenter?.x, targetCenter?.y]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!targetCenter && targetZoom == null) return;
+
+    if (targetCenter) {
+      const targetX = MAP_WIDTH / 2 - targetCenter.x;
+      const targetY = MAP_HEIGHT / 2 - targetCenter.y;
+      const clampedX = Math.max(-DRAG_BOUNDS, Math.min(DRAG_BOUNDS, targetX));
+      const clampedY = Math.max(-DRAG_BOUNDS, Math.min(DRAG_BOUNDS, targetY));
+      x.set(clampedX);
+      y.set(clampedY);
+      onCenterReached();
+    }
+
+    if (targetZoom != null) {
+      setScale(Math.min(2.2, Math.max(0.6, targetZoom)));
+    }
+  }, [targetCenter?.x, targetCenter?.y, targetZoom]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (shakePulse <= 0) return;
+
+    let ticks = 0;
+    const timer = window.setInterval(() => {
+      ticks += 1;
+      setShake({
+        x: (Math.random() - 0.5) * 8,
+        y: (Math.random() - 0.5) * 8,
+      });
+      if (ticks >= 7) {
+        window.clearInterval(timer);
+        setShake({ x: 0, y: 0 });
+      }
+    }, 56);
+
+    return () => {
+      window.clearInterval(timer);
+      setShake({ x: 0, y: 0 });
+    };
+  }, [shakePulse]);
 
   return (
     <div
@@ -53,6 +85,8 @@ export function DraggableMap({ children, targetCenter, onCenterReached }: Dragga
           x: xSpring,
           y: ySpring,
           scale,
+          marginLeft: shake.x,
+          marginTop: shake.y,
           translateX: "-50%",
           translateY: "-50%",
         }}
