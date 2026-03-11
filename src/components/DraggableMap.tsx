@@ -47,7 +47,7 @@ export function DraggableMap({ children, targetCenter, onCenterReached }: Dragga
         className="absolute origin-center"
         style={{
           width: MAP_WIDTH,
-          height: MAP_HEIGHT,
+          height: MAP_HEIGHT + 120,
           left: "50%",
           top: "50%",
           x: xSpring,

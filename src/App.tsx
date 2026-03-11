@@ -6,6 +6,7 @@ import {
   type NpcEntity,
   getNpcCameraTarget,
 } from "./components/ShipMapCanvas";
+import { Starfield } from "./components/Starfield";
 
 export default function App() {
   const [targetCenter, setTargetCenter] = useState<{ x: number; y: number } | null>(null);
@@ -40,6 +41,9 @@ export default function App() {
 
   return (
     <div className="w-full h-full overflow-hidden">
+      {/* 最底层：星空背景，固定全屏，永远不覆盖飞船 */}
+      <Starfield />
+
       <DraggableMap targetCenter={targetCenter} onCenterReached={handleCenterReached}>
         <ShipMapCanvas onNpcClick={handleNpcClick} />
       </DraggableMap>
